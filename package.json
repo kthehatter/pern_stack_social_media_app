@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon server.js -e js,ejs,html",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
@@ -17,7 +18,15 @@
   },
   "homepage": "https://github.com/kthehatter/pern_stack_social_media_app#readme",
   "dependencies": {
+    "body-parser": "^1.19.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
     "express": "^4.17.2",
-    "nodemon": "^2.0.15"
+    "http": "0.0.1-security",
+    "nodemon": "^2.0.15",
+    "pg": "^8.7.1",
+    "sequelize": "^6.15.0",
+    "sequelize-cli": "^6.4.1",
+    "socket.io": "^4.4.1"
   }
 }
