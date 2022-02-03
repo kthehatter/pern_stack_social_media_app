@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false,
         },
         profile_picture: {
-            type: DataTypes.STRING,
+            type: DataTypes.BLOB,
             allowNull: false,
         },
         confirmed_email: {

@@ -5,6 +5,7 @@ module.exports=function (handler){
         await handler(req, res);
     } catch (ex) {
         logger.error(ex.message, ex);
-        res.status(500).send({status:'500',message:'Internal server error'});
+        errorMessage = ex.message ? ex.message : 'Internal Server Error';
+        res.status(500).send({status:'500',message:errorMessage});
     }}
 };

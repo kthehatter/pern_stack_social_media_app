@@ -40,7 +40,7 @@ export default function MessengerPage(props) {
         >
           <div class="h-20 w-20 rounded-full border overflow-hidden">
             <img
-              src="https://avatars3.githubusercontent.com/u/2763884?s=128"
+              src="http://localhost:3306/api/authentication/users/adcb3a86-24e5-4a12-9945-6e8ffbb55cfa/avatar"
               alt="Avatar"
               class="h-full w-full"
             />
