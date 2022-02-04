@@ -1,10 +1,12 @@
 import React,{Fragment,useEffect,useState} from 'react';
 import InputEmoji from 'react-input-emoji';
 import {useSelector} from 'react-redux';
+import { Link } from 'react-router-dom';
 import user_icon from '../../../assets/images/user_icon.png'
-import { fetchConversationsApiCall,fetchChatMessagesApiCall } from "../../../services/messenger/conversations";
+import { fetchConversationsApiCall,fetchChatMessagesApiCall ,sendChatMessageApiCall} from "../../../services/messenger/conversations";
 import AvailableConversations from './components/availableConversations';
 import SentMessage from './components/sentMessage';
+import RecievedMessage from './components/recievedMessage';
 export default function MessengerPage(props) {
   const user = useSelector(state => state.user.value);
   let [ message, setMessage ] = useState('');
@@ -14,13 +16,30 @@ export default function MessengerPage(props) {
     const fetchChatMessages = async () => {
         await fetchChatMessagesApiCall(currentChat.conversation_id).then(res => {
           if (res.status === 200) {
-            setChatMessages(res.data);
+            setChatMessages(res.data.conversationMessage?res.data.conversationMessage:[]);
           }else{
-            setConversations(null);
+            console.log(res.data);
+            setChatMessages([]);
+          }
+        }).catch(err => {
+            setChatMessages([]);
+            console.log(err);
+        });
+    }
+    const sendMessage = async (messageType) => {
+      try{
+        await sendChatMessageApiCall(currentChat.conversation_id,message,messageType).then(res => {
+          if(res.status === 200){
+            setMessage('');
+            fetchChatMessages();
           }
         }).catch(err => {
           console.log(err);
         });
+      }catch(e){
+        console.log(e);
+      }
+
     }
     const fetchConversations = async () =>{
       try {
@@ -39,6 +58,7 @@ export default function MessengerPage(props) {
     function handleOnEnter (text) {
         console.log('enter', text)
         console.log('message', message)
+        sendMessage('text');
       }
     useEffect(() => {
         document.title = props.title || "";
@@ -106,9 +126,10 @@ export default function MessengerPage(props) {
           <div className="flex flex-col space-y-1 mt-4 -mx-2 h-80 overflow-y-auto">
             {conversations.length>0 &&conversations.map((conversation,index)=>{
               return(
-                <div className={currentChat===null || currentChat.conversation_id !== conversation.conversation_id ? `cursor-pointer hover:bg-indigo-200`:`cursor-pointer bg-indigo-100 hover:bg-indigo-200`} onClick={()=>{setCurrentChat(conversation);
+                <div  className={currentChat===null || currentChat.conversation_id !== conversation.conversation_id ? `cursor-pointer hover:bg-indigo-200`:`cursor-pointer bg-indigo-100 hover:bg-indigo-200`} onClick={()=>{
+                setCurrentChat(conversation);
                 currentChat = conversation;
-                console.log(conversation);
+                fetchChatMessages();
                 }}>
                 <AvailableConversations userID={user.id} conversation={conversation} index={index}/>
                 </div>
@@ -133,7 +154,10 @@ export default function MessengerPage(props) {
           <div className="flex flex-col h-full overflow-x-auto mb-4">
             <div className="flex flex-col h-full">
               <div className="grid grid-cols-12 gap-y-2">
-                <SentMessage/>
+                {chatMessages && chatMessages.map((message,index)=>{
+                  return  message.sender_id===user.id?<SentMessage message={message}/>:<RecievedMessage message={message}/>
+                })
+                }
               </div>
             </div>
           </div>}

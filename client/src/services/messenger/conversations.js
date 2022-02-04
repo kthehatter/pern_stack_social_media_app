@@ -33,6 +33,32 @@ export const fetchChatMessagesApiCall = async (conversationID) => {
       }
     )
     .then((res) => {
+      console.log("messages", res);
+      return res;
+    })
+    .catch((err) => {
+      return err;
+    });
+}
+
+export const sendChatMessageApiCall = async (conversationID,message,messageType) => {
+  const accessPoint = authBaseURL + "messages";
+  return await axios
+    .post(
+      accessPoint,
+      {
+        conversationID: conversationID,
+        message: message,
+        messageType: messageType,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          accessToken: accessToken,
+        },
+      }
+    )
+    .then((res) => {
       return res;
     })
     .catch((err) => {

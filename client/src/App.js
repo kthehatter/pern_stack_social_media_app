@@ -11,6 +11,7 @@ import {useDispatch,useSelector} from 'react-redux';
 import LoginPage from './views/public/authentication/loginPage';
 import {userLogout,setUserInfo} from './features/user';
 import {userTokenValidationApiCall} from './services/authentication';
+import ChatPage from './views/public/messenger/chatPage';
 function App() {
   const dispatch = useDispatch();
   const user = useSelector(state => state.user.value);
@@ -19,7 +20,6 @@ function App() {
     const verifyToken = async() => {
       try {
         const accessToken = localStorage.getItem('accessToken');
-        console.log(accessToken);
         if(!accessToken){
           dispatch(userLogout());
           return false;
@@ -53,8 +53,9 @@ function App() {
       <Router>
         <Routes>
           {/* <Route path="/" element={user.isLoggedIn ?<MessengerPage title="Messenger | KhalilDevs" />:<Navigate to="/login" />} /> */}
-          <Route path="/messenger/:conversationID" element={<MessengerPage title="Messenger | KhalilDevs" />} />
-          <Route path="/login" element={user.isLoggedIn ?<Navigate to="/" /> :<LoginPage title="Login | KhalilDevs" />} />
+          <Route path="/messenger/" element={<MessengerPage title="Messenger | KhalilDevs" />} />
+          <Route path="/chat/" element={user.isLoggedIn ?<ChatPage title="Messenger | KhalilDevs" />:<Navigate to="/login" />} />
+          <Route path="/login" element={user.isLoggedIn ?<Navigate to="/chat" /> :<LoginPage title="Login | KhalilDevs" />} />
         </Routes>
       </Router>
 

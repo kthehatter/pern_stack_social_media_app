@@ -1,20 +1,26 @@
 import React,{Fragment} from 'react';
+import { format} from 'timeago.js';
 export default function SentMessage(props) {
 return(
     <Fragment>
-    <div class="col-start-1 col-end-8 p-3 rounded-lg">
-                  <div class="flex flex-row items-center">
-                    <div
-                      class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0"
-                    >
-                      A
-                    </div>
-                    <div
-                      class="relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl">
-                      <div>{props.message}</div>
-                    </div>
-                  </div>
+              <div className="flex items-center justify-start flex-row-reverse">
+              <img
+              src={`http://localhost:3306/api/authentication/users/${props.message.sender_id}/avatar`}
+              alt="Avatar"
+              className="rounded-full h-8 w-8"
+            />
+            <div className="flex flex-col ">
+                <div
+                    className="relative mr-3 text-sm bg-indigo-100 py-2 px-4 shadow rounded-xl">
+                  <div>{props.message.message}</div>
+                  
                 </div>
+                <span className=" text-xs text-gray-500 right-0 top-0">
+                    {format(props.message.created_at)}
+                  </span>
+                  </div>
+              </div>
+
     </Fragment>
 )
 }
