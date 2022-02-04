@@ -1,25 +1,26 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
-const sharp = require('sharp');
+const sharp = require("sharp");
 const asyncHandler = require("../../middleware/asyncHandler");
 const models = require("../../models");
 const jwtGenerator = require("../../utilities/jwtGenerator");
 const { check, validationResult } = require("express-validator");
 const verifyUserToken = require("../../middleware/verifyUserToken");
 const multer = require("multer");
+const path = require("path");
 const upload = multer({
   limits: {
-      fileSize: 1000000
+    fileSize: 1000000,
   },
   fileFilter(req, file, cb) {
-      if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-          return cb(new Error('Please upload an image'))
-      }
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error("Please upload an image"));
+    }
 
-      cb(undefined, true)
-  }
-})
+    cb(undefined, true);
+  },
+});
 
 router.post(
   "/user/register",
@@ -30,7 +31,6 @@ router.post(
     check("password", "Password is required").isLength({ min: 6 }),
   ],
   asyncHandler(async (req, res) => {
-    console.log(req.body);
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log(errors.array()[0].msg);
@@ -53,12 +53,13 @@ router.post(
 
     const salt = await bcrypt.genSalt(10);
     const bcryptPassword = await bcrypt.hash(password, salt);
+    
     let newUser = await models.users.create({
       first_name: firstName,
       last_name: lastName,
       email: email.trim().toLowerCase(),
       password: bcryptPassword,
-      profile_picture: "",
+      profile_picture: '',
     });
     const jwtToken = jwtGenerator(newUser.user_id, timeToLoggedIn);
     return res
@@ -73,7 +74,6 @@ router.post(
     check("password", "Password is required").exists(),
   ],
   asyncHandler(async (req, res) => {
-    console.log(req.body);
     const { email, password } = req.body;
     var time_to_logged_in = "504h";
     let user = await models.users.findAll({
@@ -99,48 +99,76 @@ router.post(
     const accessToken = jwtGenerator(user[0].user_id, time_to_logged_in);
     return res
       .status(200)
-      .send({ status: "200", message: "Success", token: accessToken });
+      .send({
+        status: "200",
+        message: "Success",
+        accessToken: accessToken,
+        user: {
+          id: user[0].user_id,
+          firstName: user[0].first_name,
+          lastName: user[0].last_name,
+          email: user[0].email,
+        },
+      });
   })
 );
 router.post(
   "/user/verify",
   verifyUserToken,
   asyncHandler(async (req, res) => {
-    console.log("verified");
-    return res.status(200).json({ status: "200", message: " Success" });
+    const user = await models.users.findAll({
+      where: {
+        user_id: req.user.id,
+      },
+    })
+    return res.status(200).json({ status: "200", message: " Success",user: {
+      id: user[0].user_id,
+      firstName: user[0].first_name,
+      lastName: user[0].last_name,
+      email: user[0].email,
+    }, });
   })
 );
 router.post(
   "/user/profile/uploadpicture",
-  [verifyUserToken,upload.single("avatar")],
+  [verifyUserToken, upload.single("avatar")],
   asyncHandler(async (req, res) => {
-    userProfileImage= await sharp(req.file.buffer).resize({ width: 250, height: 250 }).jpeg().toBuffer();
-    const binaryPhoto = Buffer.from(userProfileImage).toString('binary')
-    const base64Photo = Buffer.from(binaryPhoto).toString('base64')
-    let user = await models.users.update({
-      profile_picture: userProfileImage
-    },{
-      where: {
-        user_id: req.user.id
-      }
-    });
-
-    return res.status(200).json({ status: "200", message: " Success" });
-  }),(error, req, res, next) => {
-    res.status(400).send({ status:'400',message: error.message })
-}
-);
-router.get('/users/:id/avatar', asyncHandler( async (req, res) => {
-      const user = await models.users.findAll({
+    userProfileImage = await sharp(req.file.buffer)
+      .resize({ width: 250, height: 250 })
+      .jpeg()
+      .toBuffer();
+    
+    let user = await models.users.update(
+      {
+        profile_picture: userProfileImage,
+      },
+      {
         where: {
-          user_id: req.params.id
+          user_id: req.user.id,
         },
-      });
-      console.log(user[0]);
-      if (!user || !user[0].profile_picture) {
-          throw new Error()
       }
-      res.set('Content-Type', 'image/png')
-      res.send(user[0].profile_picture)
-}));
+    );
+
+    return res.status(200).json({ status: "200", message: " Success"});
+  }),
+  (error, req, res, next) => {
+    res.status(400).send({ status: "400", message: error.message });
+  }
+);
+router.get(
+  "/users/:id/avatar",
+  asyncHandler(async (req, res) => {
+    console.log(req.params.id);
+    const user = await models.users.findAll({
+      where: {
+        user_id: req.params.id,
+      },
+    });
+    if (user.length<1 || !user[0].profile_picture||user[0].profile_picture=='') {
+      return res.sendFile(path.join(__dirname, "./uploads/user_icon.png"));
+    }
+    res.set("Content-Type", "image/png");
+    res.send(user[0].profile_picture);
+  })
+);
 module.exports = router;

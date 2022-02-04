@@ -7,8 +7,12 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
         autoIncrement: true,
       },
-      user_id: {
-        type: DataTypes.UUID,
+      conversation_id: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      sender_id: {
+        type: DataTypes.STRING,
         allowNull: false,
       },
       message: {

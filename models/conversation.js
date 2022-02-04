@@ -11,6 +11,10 @@ module.exports = (sequelize, DataTypes) => {
           type: DataTypes.ARRAY(DataTypes.STRING),
           allowNull: false,
         },
+        members_name: {
+          type: DataTypes.ARRAY(DataTypes.STRING),
+          allowNull: false,
+        },
         created_at: {
           type: DataTypes.DATE,
           allowNull: false,

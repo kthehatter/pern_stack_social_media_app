@@ -7,13 +7,54 @@ import {
 } from "react-router-dom";
 import './App.css';
 import MessengerPage from './views/public/messenger/messengerPage';
-
+import {useDispatch,useSelector} from 'react-redux';
+import LoginPage from './views/public/authentication/loginPage';
+import {userLogout,setUserInfo} from './features/user';
+import {userTokenValidationApiCall} from './services/authentication';
 function App() {
+  const dispatch = useDispatch();
+  const user = useSelector(state => state.user.value);
+  
+  useEffect(() => {
+    const verifyToken = async() => {
+      try {
+        const accessToken = localStorage.getItem('accessToken');
+        console.log(accessToken);
+        if(!accessToken){
+          dispatch(userLogout());
+          return false;
+        }
+        await userTokenValidationApiCall(accessToken).then(res => {
+          if(res.status === 200){
+            dispatch(setUserInfo({
+              id: res.data.user.id,
+              name: res.data.user.firstName + ' ' + res.data.user.lastName,
+              email: res.data.user.email,
+              isLoggedIn: true,
+            }));
+            return true;
+          }
+        }).catch(err => {
+          dispatch(userLogout());
+          return false;
+        }
+        );
+      }catch(e){
+          dispatch(userLogout());
+          console.log(e);
+          return false;
+        }
+    }
+    verifyToken();
+  } ,[dispatch]);
+
   return (
     <Fragment>
       <Router>
         <Routes>
-          <Route path="/" element={<MessengerPage title="Messenger" />} />
+          {/* <Route path="/" element={user.isLoggedIn ?<MessengerPage title="Messenger | KhalilDevs" />:<Navigate to="/login" />} /> */}
+          <Route path="/messenger/:conversationID" element={<MessengerPage title="Messenger | KhalilDevs" />} />
+          <Route path="/login" element={user.isLoggedIn ?<Navigate to="/" /> :<LoginPage title="Login | KhalilDevs" />} />
         </Routes>
       </Router>
 
