@@ -1,4 +1,4 @@
-import React,{Fragment,useEffect,useState} from 'react';
+import React,{Fragment,useEffect} from 'react';
 import {
   BrowserRouter as Router,
   Route,
@@ -15,7 +15,6 @@ import ChatPage from './views/public/messenger/chatPage';
 function App() {
   const dispatch = useDispatch();
   const user = useSelector(state => state.user.value);
-  
   useEffect(() => {
     const verifyToken = async() => {
       try {

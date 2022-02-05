@@ -7,16 +7,22 @@ import AvailableConversations from './components/availableConversations';
 import SelectedConversation from './components/selectedConversation';
 import SentMessage from './components/sentMessage';
 import RecievedMessage from './components/recievedMessage';
+import { io } from "socket.io-client";
 export default function ChatPage(props) {
-    const user = useSelector(state => state.user.value);
+const socket = useRef();
+const user = useSelector(state => state.user.value);
+const accessToken = localStorage.getItem("accessToken");
     const scrollRef = useRef();
   let [ message, setMessage ] = useState('');
   let [ currentChat, setCurrentChat ] = useState(null);
     let [ chatMessages, setChatMessages ] = useState([]);
+    let [ arrivalMessage, setArrivalMessage ] = useState(null);
     let [ conversations, setConversations ] = useState([]);
+    let [ onlineUsers, setOnlineUsers ] = useState([]);
     const fetchChatMessages = async () => {
         await fetchChatMessagesApiCall(currentChat.conversation_id).then(res => {
           if (res.status === 200) {
+            console.log(res.data.conversationMessage);
             setChatMessages(res.data.conversationMessage?res.data.conversationMessage:[]);
           }else{
             console.log(res.data);
@@ -32,6 +38,8 @@ export default function ChatPage(props) {
         await sendChatMessageApiCall(currentChat.conversation_id,message,messageType).then(res => {
           if(res.status === 200){
             setChatMessages(res.data.newMessages?res.data.newMessages:chatMessages);
+            const recieverID = currentChat.members.find(member => member !== user.id);
+            socket.current.emit("sendMessage",{accessToken:accessToken,recieverID:recieverID,conversationId:currentChat.conversation_id,message:message,messageType:messageType});
           }
         }).catch(err => {
           console.log(err);
@@ -56,18 +64,46 @@ export default function ChatPage(props) {
       }
     };
   function handleOnEnter (text) {
+    if (message !== '') {
     sendMessage('text');
+    }
   }
+  useEffect(() => {
+    socket.current=io.connect("http://localhost:3306");
+  },[]);
+  useEffect(() => {
+    socket.current.emit('addUser',{userId:user.id,accessToken:accessToken});
+    socket.current.on('getUsers',onlineUsers => {
+      setOnlineUsers(onlineUsers);
+    });
+  },[accessToken, user.id]);
+  useEffect(() => {
+    socket.current.on('getMessage',data => {
+      console.log(data);
+      setChatMessages((prev)=>[...prev,{
+        conversation_id:data.conversationID?data.conversationID:'',
+        created_at:Date.now(),
+        message:data.message?data.message:'',
+        message_audio: null,
+        message_id: 11,
+        message_image: null,
+        messageType:data.messageType?data.messageType:'text',
+        message_video: null,
+        sender_id:data.senderID?data.senderID:'',
+        updated_at:Date.now(),
+      }]);
+          });
+  } ,[socket]);
   useEffect(() => {
     document.title = props.title || "";
     fetchConversations();
-    if (chatMessages && chatMessages.length > 0) {
-    scrollRef.current.scrollIntoView();
-        
-    }
-}, [props.title,chatMessages]);
+    
+    scrollRef.current?.scrollIntoView();
+
+}, [chatMessages, props.title]);
+
     return(
-        <Fragment class="h-screen overflow-hidden flex items-center justify-center">
+        <Fragment >
             <div className="flex flex-row h-screen antialiased text-gray-800">
     <div className="flex flex-row w-96 flex-shrink-0 bg-gray-100 p-4">
       <div className="flex flex-col items-center py-4 flex-shrink-0 w-20 bg-indigo-800 rounded-3xl">
@@ -225,13 +261,11 @@ export default function ChatPage(props) {
                     currentChat = conversation;
                     setCurrentChat(conversation);
                     fetchChatMessages();
-                }}> <AvailableConversations userID={user.id} conversation={conversation} /></div>:<div className="hover:bg-red-100 cursor-pointer"><SelectedConversation userID={user.id} conversation={conversation} /></div>
+                }}> <AvailableConversations onlineUsers={onlineUsers} userID={user.id} conversation={conversation} /></div>:<div className="hover:bg-red-100 cursor-pointer"><SelectedConversation onlineUsers={onlineUsers} userID={user.id} conversation={conversation} /></div>
                 )
             })}
           </div>
         </div>
-        
-        
       </div>
     </div>
     <div className="flex flex-col h-full w-full bg-white px-4 py-6">
